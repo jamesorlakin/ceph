@@ -2,6 +2,89 @@
 Pacific
 =======
 
+v16.2.13 Pacific
+================
+
+This is the thirteenth backport release in the Pacific series.
+
+Notable Changes
+---------------
+
+* `ceph-mgr-modules-core` debian package does not recommend `ceph-mgr-rook`
+  anymore. As the latter depends on `python3-numpy` which cannot be imported in
+  different Python sub-interpreters multi-times if the version of
+  `python3-numpy` is older than 1.19. Since `apt-get` installs the `Recommends`
+  packages by default, `ceph-mgr-rook` was always installed along with
+  `ceph-mgr` debian package as an indirect dependency. If your workflow depends
+  on this behavior, you might want to install `ceph-mgr-rook` separately.
+
+* A new library is available, libcephsqlite. It provides a SQLite Virtual File
+  System (VFS) on top of RADOS. The database and journals are striped over
+  RADOS across multiple objects for virtually unlimited scaling and throughput
+  only limited by the SQLite client. Applications using SQLite may change to
+  the Ceph VFS with minimal changes, usually just by specifying the alternate
+  VFS. We expect the library to be most impactful and useful for applications
+  that were storing state in RADOS omap, especially without striping which
+  limits scalability.
+
+* MDS upgrades no longer require stopping all standby MDS daemons before
+  upgrading the sole active MDS for a file system.
+
+* CephFS: Failure to replay the journal by a standby-replay daemon will now
+  cause the rank to be marked damaged.
+
+* RGW: It is possible to specify ssl options and ciphers for beast frontend now.
+  The default ssl options setting is "no_sslv2:no_sslv3:no_tlsv1:no_tlsv1_1".
+  If you want to return back the old behavior add 'ssl_options=' (empty) to
+  ``rgw frontends`` configuration.
+
+* fs: A file system can be created with a specific ID ("fscid"). This is useful
+  in certain recovery scenarios, e.g., monitor database lost and rebuilt, and
+  the restored file system is expected to have the same ID as before.
+
+* CEPHFS: Rename the `mds_max_retries_on_remount_failure` option to
+  `client_max_retries_on_remount_failure` and move it from mds.yaml.in to
+  mds-client.yaml.in because this option was only used by MDS client from its
+  birth.
+
+* `ceph mgr dump` command now outputs `last_failure_osd_epoch` and
+  `active_clients` fields at the top level.  Previously, these fields were
+  output under `always_on_modules` field.
+
+Changelog
+---------
+
+* ceph-volume: update the OS before deploying Ceph (pacific) (`pr#50996 <https://github.com/ceph/ceph/pull/50996>`_, Guillaume Abrioux)
+* cephfs-top: Handle `METRIC_TYPE_NONE` fields for sorting (`pr#50597 <https://github.com/ceph/ceph/pull/50597>`_, Neeraj Pratap Singh)
+* doc/dev: format command in cephfs-mirroring (`pr#51109 <https://github.com/ceph/ceph/pull/51109>`_, Zac Dover)
+* doc/glossary: add "Hybrid Storage" (`pr#51098 <https://github.com/ceph/ceph/pull/51098>`_, Zac Dover)
+* doc/glossary: add "Placement Groups" definition (`pr#51186 <https://github.com/ceph/ceph/pull/51186>`_, Zac Dover)
+* doc/glossary: improve "CephX" entry (`pr#51065 <https://github.com/ceph/ceph/pull/51065>`_, Zac Dover)
+* doc/mgr/prometheus: fix confval reference (`pr#51094 <https://github.com/ceph/ceph/pull/51094>`_, Piotr Parczewski)
+* doc/rados/operations: edit monitoring.rst (`pr#51037 <https://github.com/ceph/ceph/pull/51037>`_, Zac Dover)
+* doc/rados/ops: remove ceph-medic from monitoring (`pr#51089 <https://github.com/ceph/ceph/pull/51089>`_, Zac Dover)
+* doc/radosgw: format part of s3select (`pr#51118 <https://github.com/ceph/ceph/pull/51118>`_, Cole Mitchell)
+* doc/radosgw: format part of s3select (`pr#51106 <https://github.com/ceph/ceph/pull/51106>`_, Cole Mitchell)
+* doc/rgw: refine "Setting a Zonegroup" (`pr#51073 <https://github.com/ceph/ceph/pull/51073>`_, Zac Dover)
+* doc/start: edit first 150 lines of documenting-ceph (`pr#51183 <https://github.com/ceph/ceph/pull/51183>`_, Zac Dover)
+* librbd: fix wrong attribute for rbd_quiesce_complete API (`pr#50872 <https://github.com/ceph/ceph/pull/50872>`_, Dongsheng Yang)
+* librbd: report better errors when failing to enable mirroring on an image (`pr#50836 <https://github.com/ceph/ceph/pull/50836>`_, Prasanna Kumar Kalever)
+* mgr/dashboard: custom image for kcli bootstrap script (`pr#50917 <https://github.com/ceph/ceph/pull/50917>`_, Nizamudeen A)
+* mgr/dashboard: fix cephadm e2e expression changed error (`pr#51081 <https://github.com/ceph/ceph/pull/51081>`_, Nizamudeen A)
+* mgr/dashboard: fix create osd default selected as recommended not working (`pr#51038 <https://github.com/ceph/ceph/pull/51038>`_, Nizamudeen A)
+* mgr/dashboard: fix eviction of all FS clients (`pr#51009 <https://github.com/ceph/ceph/pull/51009>`_, Pere Diaz Bou)
+* mon/MgrMap: dump last_failure_osd_epoch and active_clients at top level (`pr#50305 <https://github.com/ceph/ceph/pull/50305>`_, Ilya Dryomov)
+* qa/rgw: use symlinks to specify distro (`pr#50940 <https://github.com/ceph/ceph/pull/50940>`_, Casey Bodley)
+* qa: test the "ms_mode" options in kclient workflows (`pr#50712 <https://github.com/ceph/ceph/pull/50712>`_, Jeff Layton)
+* rgw/coroutine: check for null stack on wakeup (`pr#49097 <https://github.com/ceph/ceph/pull/49097>`_, Casey Bodley)
+* rgw: "reshard cancel" errors with "invalid argument" (`pr#49091 <https://github.com/ceph/ceph/pull/49091>`_, J. Eric Ivancich)
+* rgw: bucket list operation slow down in special scenario (`pr#49086 <https://github.com/ceph/ceph/pull/49086>`_, zealot)
+* rgw: concurrency for multi object deletes (`pr#49327 <https://github.com/ceph/ceph/pull/49327>`_, Casey Bodley, Cory Snyder)
+* rgw: optimizations for handling ECANCELED errors from within get_obj_state (`pr#50886 <https://github.com/ceph/ceph/pull/50886>`_, Cory Snyder)
+* rgw: rgw_parse_url_bucket() rejects empty bucket names after 'tenant:' (`pr#50624 <https://github.com/ceph/ceph/pull/50624>`_, Casey Bodley)
+* rgw: RGWPutLC does not require Content-MD5 (`pr#49089 <https://github.com/ceph/ceph/pull/49089>`_, Casey Bodley)
+* v16.2.12 (`pr#51066 <https://github.com/ceph/ceph/pull/51066>`_, Ceph Release Team, Cory Snyder, Guillaume Abrioux)
+
 v16.2.12 Pacific
 ================
 
